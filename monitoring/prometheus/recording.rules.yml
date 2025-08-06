@@ -1,0 +1,33 @@
+groups:
+- name: webhook_recording_rules
+  interval: 30s
+  rules:
+  - record: webhook:events_received_rate
+    expr: rate(webhook_events_received_total[5m])
+    labels:
+      job: webhook-processor
+
+  - record: webhook:events_processed_rate
+    expr: rate(webhook_events_processed_total[5m])
+    labels:
+      job: webhook-processor
+
+  - record: webhook:error_rate
+    expr: rate(webhook_events_processed_total{status="failed"}[5m]) / rate(webhook_events_processed_total[5m])
+    labels:
+      job: webhook-processor
+
+  - record: webhook:processing_latency_p95
+    expr: histogram_quantile(0.95, rate(webhook_processing_duration_seconds_bucket[5m]))
+    labels:
+      job: webhook-processor
+
+  - record: webhook:processing_latency_p99
+    expr: histogram_quantile(0.99, rate(webhook_processing_duration_seconds_bucket[5m]))
+    labels:
+      job: webhook-processor
+
+  - record: webhook:retry_rate
+    expr: rate(webhook_retries_total[5m])
+    labels:
+      job: webhook-processor

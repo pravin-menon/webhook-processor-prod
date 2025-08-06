@@ -1,0 +1,29 @@
+# Config file for air (worker)
+#
+# Working directory
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# Command to build the worker application with mod flag to ignore vendor
+cmd = "go build -mod=mod -o ./tmp/worker ./cmd/worker"
+# Binary to run
+bin = "./tmp/worker"
+# Watch these files for changes
+include_ext = ["go", "tpl", "tmpl", "html"]
+# Ignore these files
+exclude_dir = ["assets", "tmp", "vendor"]
+# Watch these directories
+include_dir = []
+# Exclude files
+exclude_file = []
+# It's not necessary to trigger build each time file changes if it's a non-go file.
+non_go_file_trigger_build = false
+
+[log]
+# Show log time
+time = true
+
+[misc]
+# Delete tmp directory on exit
+clean_on_exit = true

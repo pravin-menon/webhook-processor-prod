@@ -1,0 +1,85 @@
+# Version control
+.git
+.gitignore
+
+# Development environment
+.env*
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build artifacts
+/tmp
+/dist
+/bin
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Testing
+*_test.go
+/coverage.out
+/profile.out
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.docker
+
+# Monitoring
+/monitoring
+
+# Logs
+*.log
+/logs
+
+# Development tools
+ngrok.yml
+.ngrok/
+
+# Local SSL certificates
+*.crt
+*.csr
+ssl/
+certs/
+
+# Generated and temporary files
+vendor/
+*.orig
+*.rej
+*.bak
+*.backup
+*.old
+*~
+.#*
+\#*\#
+
+# Runtime files
+*.pid
+*.sock
+
+# OS specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Debug files
+webhook_debug.log
+raw_webhook_data.json
+
+# IDE configurations
+.editorconfig
+.gitattributes
+
+# Scripts not needed in container
+scripts/production/
+scripts/check_dns.sh
+scripts/generate_secrets.sh

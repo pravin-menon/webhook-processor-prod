@@ -1,0 +1,65 @@
+groups:
+- name: webhook_alerts
+  rules:
+  - alert: HighErrorRate
+    expr: rate(webhook_events_processed_total{status="failed"}[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High webhook processing error rate
+      description: "Error rate is {{ $value }} for client {{ $labels.client_id }}"
+
+  - alert: QueueBacklog
+    expr: webhook_queue_size > 1000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Large queue backlog
+      description: "Queue size is {{ $value }} for client {{ $labels.client_id }}"
+
+  - alert: RateLimitApproaching
+    expr: rate(webhook_rate_limit_exceeded_total[1h]) > 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rate limit threshold approaching
+      description: "Client {{ $labels.client_id }} is approaching rate limit"
+
+  - alert: HighRetryRate
+    expr: rate(webhook_retries_total[5m]) > 0.2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High retry rate detected
+      description: "Retry rate is {{ $value }} for client {{ $labels.client_id }}"
+
+  - alert: WebhookProcessorDown
+    expr: up{job="webhook-processor"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Webhook processor is down
+      description: "The webhook processor service is not reachable"
+
+  - alert: HighRequestLatency
+    expr: histogram_quantile(0.95, rate(webhook_processing_duration_seconds_bucket[5m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High request latency
+      description: "95th percentile latency is {{ $value }}s"
+
+  - alert: LowProcessingRate
+    expr: rate(webhook_events_processed_total[5m]) < 0.1
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: Low webhook processing rate
+      description: "Processing rate is {{ $value }} events per second"

@@ -1,0 +1,123 @@
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# Build and binary directories
+bin/
+dist/
+build/
+tmp/
+temp/
+
+# Environment and configuration
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.env
+*env*
+
+# Logs and debugging
+*.log
+logs/
+debug/
+*.debug
+debug_files/
+
+# Security and credentials
+*.pem
+*.key
+*.cert
+*.token
+secrets.yaml
+secrets.yml
+config.yaml
+!config.example.yaml
+
+# Cache and temporary files
+*.cache
+*.tmp
+*.temp
+*.bak
+*.pid
+*.pid.lock
+
+# Test coverage
+*.coverage
+*.coverprofile
+coverage.html
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker volumes and data
+data/
+volumes/
+
+# Ngrok configuration
+.ngrok/
+ngrok.yml
+
+# Project specific
+air.toml
+!.air.example.toml
+
+# Debug and webhook data files
+raw_webhook_data*.json
+webhook_debug*.json
+
+# Monitoring and runtime data
+monitoring/data/
+monitoring/grafana/data/
+monitoring/prometheus/data/
+monitoring/loki/data/
+
+# SSL/TLS certificates
+*.crt
+*.csr
+ssl/
+certs/
+
+# Generated files
+vendor/
+go.sum
+*.mod.bak
+*.sum.bak
+
+# Runtime files
+*.pid
+*.sock
+
+# Backup and temporary files
+*~
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+.#*
+\#*\#
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Development debugging
+webhook_debug.log
+raw_webhook_data.json

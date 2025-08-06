@@ -1,0 +1,34 @@
+# Live reload configuration for development
+# Copy this file to air.toml and modify as needed
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main ./cmd/app"
+  bin = "tmp/main"
+  full_bin = "APP_ENV=development ./tmp/main"
+  watch_dir = ["cmd", "api", "internal", "pkg", "config"]
+  watch_ext = ["go", "yaml", "yml"]
+  exclude_dir = ["assets", "tmp", "vendor", "docs", "monitoring", "debug_files"]
+  include_ext = ["go", "yaml", "yml"]
+  exclude_file = []
+  exclude_regex = ["_test.go"]
+  exclude_unchanged = false
+  follow_symlink = false
+  delay = 1000
+  stop_on_root_change = false
+  send_interrupt = false
+  kill_delay = "0s"
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
+
+[log]
+  time = false
+
+[misc]
+  clean_on_exit = false

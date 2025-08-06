@@ -1,0 +1,32 @@
+FROM golang:1.24-alpine
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache \
+    build-base \
+    gcc \
+    git
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy the source code
+COPY . .
+
+# Build the worker binary
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o worker ./cmd/worker
+
+FROM alpine:latest
+
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=0 /app/worker .
+COPY --from=0 /app/config/config.yaml ./config/
+
+# Run the worker
+CMD ["./worker"]

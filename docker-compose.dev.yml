@@ -1,0 +1,139 @@
+services:
+  webhook-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    expose:
+      - "8080"
+      - "9090"
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - APP_PORT=${APP_PORT:-8080}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - PROMETHEUS_PORT=${PROMETHEUS_PORT:-9090}
+      - METRICS_PATH=${METRICS_PATH:-/metrics}
+      # Cloud services (MongoDB Atlas & CloudAMQP)
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-webhook_events}
+      - MONGODB_COLLECTION=${MONGODB_COLLECTION:-events}
+      - CLOUDAMQP_URL=${CLOUDAMQP_URL}
+      - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE:-webhook_events}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-webhook_queue}
+      # Security
+      - API_KEY_HEADER=${API_KEY_HEADER:-X-API-Key}
+      - MAILERCLOUD_API_KEYS=${MAILERCLOUD_API_KEYS}
+      # Development settings
+      - WEBHOOK_DEBUG=${WEBHOOK_DEBUG:-true}
+    volumes:
+      - .:/app
+      - /app/vendor
+      - /app/tmp
+    networks:
+      - webhook-dev
+
+  webhook-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      # Cloud services (MongoDB Atlas & CloudAMQP)
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-webhook_events}
+      - MONGODB_COLLECTION=${MONGODB_COLLECTION:-events}
+      - CLOUDAMQP_URL=${CLOUDAMQP_URL}
+      - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE:-webhook_events}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-webhook_queue}
+    volumes:
+      - .:/app
+      - /app/vendor
+      - /app/tmp
+    networks:
+      - webhook-dev
+    command: ["air", "-c", "air.worker.toml"]
+
+  # Development monitoring (optional)
+  prometheus-dev:
+    image: prom/prometheus:latest
+    ports:
+      - "${PROMETHEUS_DEV_PORT:-9091}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml
+      - ./monitoring/prometheus/recording.rules.yml:/etc/prometheus/recording.rules.yml
+      - prometheus_dev_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    networks:
+      - webhook-dev
+    profiles:
+      - monitoring
+
+  grafana-dev:
+    image: grafana/grafana:latest
+    ports:
+      - "${GRAFANA_DEV_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_DEV_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_DEV_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=${DOMAIN:-localhost}
+      - GF_SERVER_ROOT_URL=http://${DOMAIN:-localhost}:${GRAFANA_DEV_PORT:-3000}/
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus-dev
+    networks:
+      - webhook-dev
+    profiles:
+      - monitoring
+
+  # nginx proxy for development (replaces ngrok)
+  nginx-dev:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "8080:80"  # Also expose on 8080 for MailerCloud compatibility
+    volumes:
+      - ./nginx/dev-fixed.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - webhook-processor
+    networks:
+      - webhook-dev
+    profiles:
+      - nginx
+
+  # ngrok service for webhook testing (alternative to nginx)
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "webhook"
+      - "--authtoken=${NGROK_AUTHTOKEN}"
+      - "--config=/etc/ngrok.yml"
+    volumes:
+      - ./config/ngrok.yml:/etc/ngrok.yml
+    ports:
+      - "4040:4040"
+    networks:
+      - webhook-dev
+    profiles:
+      - ngrok
+    depends_on:
+      - webhook-processor
+
+volumes:
+  prometheus_dev_data:
+  grafana_dev_data:
+
+networks:
+  webhook-dev:
+    driver: bridge
