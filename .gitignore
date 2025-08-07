@@ -88,6 +88,9 @@ monitoring/data/
 monitoring/grafana/data/
 monitoring/prometheus/data/
 monitoring/loki/data/
+*.json.backup
+*_fixed.json
+*_backup.*
 
 # SSL/TLS certificates
 *.crt
@@ -123,3 +126,8 @@ Desktop.ini
 # Development debugging
 webhook_debug.log
 raw_webhook_data.json
+
+# Miscellaneous
+GRAFANA_PROVISIONING_FIX.md
+WEBHOOK_VALIDATION_FIX.md
+DNS_CONFIGURATION_GUIDE.md
