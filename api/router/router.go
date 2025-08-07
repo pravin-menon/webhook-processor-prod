@@ -78,15 +78,49 @@ func Setup(logger *logger.Logger, publisher queue.Publisher, cfg *config.Config)
 		// Check if this is a MailerCloud validation request
 		webhookId := c.GetHeader("Webhook-Id")
 		webhookType := c.GetHeader("Webhook-Type")
+		userAgent := c.GetHeader("User-Agent")
+		contentType := c.GetHeader("Content-Type")
 
-		// MailerCloud validation requests specifically use "WebhookID" as the webhook ID
-		// Real webhooks have actual IDs like "Kyy", "KZa", etc.
-		if webhookId == "WebhookID" {
+		// Log incoming request for debugging
+		logger.Desugar().Info("Incoming webhook POST request",
+			zap.String("webhook_id", webhookId),
+			zap.String("webhook_type", webhookType),
+			zap.String("user_agent", userAgent),
+			zap.String("content_type", contentType),
+			zap.String("method", c.Request.Method))
+
+		// MailerCloud validation scenarios:
+		// 1. Webhook-Id header with "WebhookID" value (classic validation)
+		// 2. User-Agent contains "MailerCloud" (test requests)
+		// 3. Empty payload with specific headers (URL validation)
+		isMailerCloudValidation := false
+
+		if webhookId == "WebhookID" || userAgent == "MailerCloud" {
+			isMailerCloudValidation = true
+		}
+
+		// Also check for empty or minimal payload which indicates validation
+		var requestBody map[string]interface{}
+		if err := c.ShouldBindJSON(&requestBody); err == nil {
+			// If payload is empty or minimal, it's likely a validation request
+			if len(requestBody) == 0 || (len(requestBody) == 1 && requestBody["test"] != nil) {
+				isMailerCloudValidation = true
+			}
+		}
+
+		// Reset the request body for further processing
+		c.Request.Body = c.Request.Body
+
+		if isMailerCloudValidation {
 			// This is MailerCloud validation - return success
+			logger.Desugar().Info("Handling MailerCloud validation request",
+				zap.String("webhook_id", webhookId),
+				zap.String("user_agent", userAgent))
 			c.JSON(200, gin.H{
 				"status":  "ok",
 				"message": "Webhook validation successful",
 				"service": "MailerCloud Webhook Processor",
+				"success": true,
 			})
 			return
 		}

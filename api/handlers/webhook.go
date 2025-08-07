@@ -37,7 +37,13 @@ func (h *MailerCloudWebhookHandler) HandleWebhook(c *gin.Context) {
 
 	// Handle GET requests for URL validation
 	if c.Request.Method == "GET" {
-		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "Webhook endpoint is valid"})
+		h.logger.Info("Handling GET request for webhook validation")
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
+			"message": "Webhook endpoint is valid",
+			"service": "MailerCloud Webhook Processor",
+			"success": true,
+		})
 		return
 	}
 
@@ -46,6 +52,8 @@ func (h *MailerCloudWebhookHandler) HandleWebhook(c *gin.Context) {
 	if err := c.ShouldBindJSON(&data); err != nil {
 		h.logger.Error("Failed to parse webhook payload",
 			zap.Error(err),
+			zap.String("content_type", c.GetHeader("Content-Type")),
+			zap.String("user_agent", c.GetHeader("User-Agent")),
 		)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON payload"})
 		return
@@ -55,17 +63,49 @@ func (h *MailerCloudWebhookHandler) HandleWebhook(c *gin.Context) {
 	h.logger.Info("Received webhook request",
 		zap.String("method", c.Request.Method),
 		zap.String("content-type", c.GetHeader("Content-Type")),
-		zap.Any("headers", c.Request.Header),
-		zap.Any("body", data),
+		zap.String("user-agent", c.GetHeader("User-Agent")),
+		zap.String("webhook-id", c.GetHeader("Webhook-Id")),
+		zap.String("webhook-type", c.GetHeader("Webhook-Type")),
+		zap.Any("payload", data),
 	)
 
-	// For test requests from MailerCloud
-	if c.Request.UserAgent() == "MailerCloud" {
-		h.logger.Info("Handling MailerCloud test request")
-		metrics.WebhookReceived.WithLabelValues("test", "verification").Inc()
+	// Handle various MailerCloud test/validation scenarios
+	userAgent := c.GetHeader("User-Agent")
+	webhookId := c.GetHeader("Webhook-Id")
+
+	// Validation scenarios:
+	// 1. User-Agent is "MailerCloud" (classic test requests)
+	// 2. Webhook-Id is "WebhookID" (URL validation)
+	// 3. Empty or test payload
+	isValidationRequest := false
+
+	if userAgent == "MailerCloud" || webhookId == "WebhookID" {
+		isValidationRequest = true
+	}
+
+	// Check for test payload patterns
+	if len(data) == 0 || (len(data) == 1 && data["test"] != nil) {
+		isValidationRequest = true
+	}
+
+	// Also check for common test event patterns
+	if event, ok := data["event"].(string); ok {
+		if event == "test" || event == "validation" || event == "ping" {
+			isValidationRequest = true
+		}
+	}
+
+	if isValidationRequest {
+		h.logger.Info("Handling MailerCloud validation/test request",
+			zap.String("user_agent", userAgent),
+			zap.String("webhook_id", webhookId),
+			zap.Any("payload", data))
+		metrics.WebhookReceived.WithLabelValues("test", "validation").Inc()
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Webhook URL verified",
 			"success": true,
+			"status":  "ok",
+			"service": "MailerCloud Webhook Processor",
 		})
 		return
 	}

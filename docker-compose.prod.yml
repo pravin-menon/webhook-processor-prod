@@ -26,6 +26,12 @@ services:
       - VIRTUAL_PORT=8080
       - LETSENCRYPT_HOST=${DOMAIN}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      # Nginx configuration
+      - NGINX_CLIENT_MAX_BODY_SIZE=10m
+      - NGINX_WORKER_PROCESSES=auto
+      - NGINX_WORKER_CONNECTIONS=1024
+      - NGINX_WEBHOOK_RATE_LIMIT=50r/s
+      - NGINX_API_RATE_LIMIT=500r/m
     expose:
       - "8080"
       - "9090"
@@ -59,6 +65,8 @@ services:
 
   nginx-proxy:
     image: nginxproxy/nginx-proxy:latest
+    labels:
+      - "com.github.nginx-proxy.docker-gen=true"
     ports:
       - "80:80"
       - "443:443"
@@ -67,15 +75,14 @@ services:
       - certs:/etc/nginx/certs
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
-      - ./nginx/custom.conf:/etc/nginx/conf.d/custom.conf:ro
     environment:
       - DEFAULT_HOST=${DOMAIN}
       - ENABLE_IPV6=true
-      - NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-10m}
-      - NGINX_WORKER_PROCESSES=${NGINX_WORKER_PROCESSES:-auto}
-      - NGINX_WORKER_CONNECTIONS=${NGINX_WORKER_CONNECTIONS:-1024}
-      - NGINX_WEBHOOK_RATE_LIMIT=${NGINX_WEBHOOK_RATE_LIMIT:-10r/s}
-      - NGINX_API_RATE_LIMIT=${NGINX_API_RATE_LIMIT:-100r/m}
+      - NGINX_CLIENT_MAX_BODY_SIZE=10m
+      - NGINX_WORKER_PROCESSES=auto
+      - NGINX_WORKER_CONNECTIONS=1024
+      - NGINX_WEBHOOK_RATE_LIMIT=50r/s
+      - NGINX_API_RATE_LIMIT=500r/m
     networks:
       - proxy-network
     restart: unless-stopped

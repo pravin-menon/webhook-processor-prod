@@ -1,0 +1,32 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+  readTimeout: "5s"
+  writeTimeout: "10s"
+
+# RabbitMQ Configuration - CloudAMQP only
+rabbitmq:
+  url: ""
+  exchange: "webhook_events"
+  queueName: "webhook_queue"
+  retryCount: 3
+  retryDelay: "10s"
+  maxRetryDelay: "300s"
+
+# MongoDB Configuration - MongoDB Atlas only
+mongodb:
+  uri: ""
+  database: "webhook_events"
+  collection: "events"
+
+monitoring:
+  prometheusPort: 9090
+  metricsPath: "/metrics"
+
+security:
+  apiKeyHeader: "X-API-Key"
+  apiKeys: {} # Loaded from environment variables
+
+logging:
+  level: "info"
+  format: "json"

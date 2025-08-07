@@ -522,3 +522,5 @@ You now have a fully functional webhook processing system that can:
 - Secure communications with SSL/TLS
 
 For ongoing support, monitor the Grafana dashboards, review application logs regularly, and keep cloud services updated with the latest features and security patches.
+
+{campaign_id: "KuawaKS", event:{ "$regex": "lick", "$options": "i" }}
